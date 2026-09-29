@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+.data/
+runtime/
+secrets/
+config/users.json
+coverage/
+npm-debug.log*
+.DS_Store
+*.tsbuildinfo
