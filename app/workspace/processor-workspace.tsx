@@ -11,6 +11,8 @@ import {
   CircleAlert,
   FileCheck2,
   FileText,
+  FolderOpen,
+  Image,
   Layers3,
   LoaderCircle,
   LogOut,
@@ -169,6 +171,7 @@ export function ProcessorWorkspace({
   function resetOperation() {
     setStage("upload");
     setFile(null);
+    setDragging(false);
     setAnalysis(null);
     setDraft({});
     setReceipt(null);
@@ -350,7 +353,7 @@ export function ProcessorWorkspace({
                   onDragEnter={() => setDragging(true)}
                   onDragLeave={() => setDragging(false)}
                   onDrop={drop}
-                  onRemove={() => acceptFile(null)}
+                  onRemove={resetOperation}
                   onAnalyze={analyze}
                 />
               )}
@@ -403,6 +406,26 @@ function UploadStage({
   onRemove: () => void;
   onAnalyze: () => void;
 }) {
+  const [choosingSource, setChoosingSource] = useState(false);
+  const [isMobilePhone, setIsMobilePhone] = useState(false);
+  const galleryInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMobilePhone(/Mobi|iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent));
+  }, []);
+
+  function openPicker(input: HTMLInputElement | null) {
+    if (!input) return;
+    input.value = "";
+    input.click();
+  }
+
+  function handleInput(event: ChangeEvent<HTMLInputElement>) {
+    if (event.target.files?.length) setChoosingSource(false);
+    onInput(event);
+  }
+
   return (
     <div className="surface-card upload-card">
       <div className="section-heading">
@@ -416,20 +439,42 @@ function UploadStage({
           onDragEnter={(event) => { event.preventDefault(); onDragEnter(); }}
           onDragOver={(event) => event.preventDefault()}
           onDragLeave={onDragLeave}
-          onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") inputRef.current?.click(); }}
+          onDrop={(event) => {
+            if (event.dataTransfer.files.length) setChoosingSource(false);
+            onDrop(event);
+          }}
         >
-          <input ref={inputRef} type="file" accept={definition.accept} capture="environment" onChange={onInput} hidden />
+          <input ref={inputRef} type="file" accept={definition.accept} onChange={handleInput} hidden />
+          <input ref={galleryInput} type="file" accept="image/*" onChange={handleInput} hidden />
+          <input ref={cameraInput} type="file" accept="image/*" capture="environment" onChange={handleInput} hidden />
           <span className="upload-symbol"><UploadCloud size={31} /></span>
           <h3>Arrastrá el archivo o elegilo desde el equipo</h3>
           <p>{definition.formatsLabel} · Hasta 15 MB</p>
           <div className="upload-actions">
-            <button type="button" className="secondary-button"><FileText size={18} /> Elegir archivo</button>
-            <span className="mobile-camera-hint"><Camera size={17} /> También podés usar la cámara</span>
+            <button
+              type="button"
+              className="secondary-button"
+              aria-expanded={isMobilePhone ? choosingSource : undefined}
+              aria-controls={isMobilePhone ? "upload-source-options" : undefined}
+              onClick={() => {
+                if (isMobilePhone) setChoosingSource((current) => !current);
+                else openPicker(inputRef.current);
+              }}
+            >
+              <FileText size={18} /> {choosingSource ? "Cerrar opciones" : "Elegir archivo"}
+            </button>
           </div>
+          {isMobilePhone && choosingSource && (
+            <div id="upload-source-options" className="upload-source-options" role="group" aria-label="Origen del documento">
+              <p>¿Desde dónde querés cargar el documento?</p>
+              <div className="upload-source-buttons">
+                <button type="button" className="secondary-button" onClick={() => openPicker(galleryInput.current)}><Image size={18} /> Galería de fotos</button>
+                <button type="button" className="secondary-button" onClick={() => openPicker(inputRef.current)}><FolderOpen size={18} /> Archivos</button>
+                <button type="button" className="secondary-button" onClick={() => openPicker(cameraInput.current)}><Camera size={18} /> Cámara</button>
+              </div>
+              <small>Tu dispositivo solicitará los permisos necesarios. Solo se carga el archivo que elijas.</small>
+            </div>
+          )}
         </div>
       ) : (
         <div className="selected-file">
