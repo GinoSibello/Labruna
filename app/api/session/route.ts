@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const user = await requireUser();
     return NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, profile: user.profile },
       allowedModules: enabledModules().filter((module) => user.allowedModules.includes(module)),
       expiresAt: new Date(user.exp * 1000).toISOString(),
     });

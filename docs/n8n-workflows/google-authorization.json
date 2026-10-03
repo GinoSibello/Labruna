@@ -1,0 +1,47 @@
+{
+  "name": "Labruna Web - Autorización de usuarios",
+  "active": false,
+  "nodes": [
+    {
+      "id": "auth-webhook", "name": "Webhook autorización", "type": "n8n-nodes-base.webhook", "typeVersion": 2,
+      "position": [0, 0], "webhookId": "d236b0c2-53e4-4d27-a516-e873a9251ad4",
+      "parameters": { "httpMethod": "POST", "path": "web/auth/authorize/v1", "authentication": "headerAuth", "responseMode": "responseNode", "options": {} },
+      "credentials": { "httpHeaderAuth": { "id": "aBOGtbc3dELleTQy", "name": "Labruna Web Header Auth" } }
+    },
+    {
+      "id": "auth-validate", "name": "Validar correo", "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [240, 0], "onError": "continueErrorOutput",
+      "parameters": { "jsCode": "const body = $input.first().json.body ?? {};\nif (body.source !== 'web' || typeof body.email !== 'string' || body.email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(body.email.trim())) throw new Error('Solicitud inválida');\nreturn [{json:{email:body.email.trim().toLowerCase()}}];" }
+    },
+    {
+      "id": "auth-sheet", "name": "Leer usuarios", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.7,
+      "position": [480, 0], "alwaysOutputData": true, "onError": "continueErrorOutput",
+      "parameters": {
+        "documentId": { "__rl": true, "value": "1NG_HRLRdUghWa3rEJ6o7bIBN3blpA210RyEmoEAqEQk", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "options": {}
+      },
+      "credentials": { "googleSheetsOAuth2Api": { "id": "9riJ1T9AlJp1fwda", "name": "AEye" } }
+    },
+    {
+      "id": "auth-resolve", "name": "Resolver permisos", "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [720, 0], "onError": "continueErrorOutput",
+      "parameters": { "jsCode": "const email = $('Validar correo').first().json.email;\nconst normalize = value => String(value ?? '').trim().toLowerCase();\nconst yes = value => normalize(value).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '') === 'si';\nconst rows = $input.all().map(item => item.json);\nif (rows.some(row => row.row_number != null) && !rows.some(row => Object.hasOwn(row, 'email') && Object.hasOwn(row, 'web_profile') && Object.hasOwn(row, 'web_enabled'))) throw new Error('Faltan columnas web');\nconst matches = rows.filter(row => normalize(row.email) === email);\nif (matches.length > 1) throw new Error('Correo duplicado');\nconst row = matches[0];\nif (!row || !yes(row.web_enabled) || !['devAdmin','Labruna'].includes(String(row.web_profile ?? '').trim())) return [{json:{authorized:false}}];\nconst allowedModules = ['remitos','chapas','cheques'].filter(module => yes(row['auth_' + module]));\nreturn [{json:{authorized:true,user:{name:String(row.name ?? '').trim() || String(row.web_profile).trim(),email,profile:String(row.web_profile).trim(),allowedModules}}}];" }
+    },
+    {
+      "id": "auth-response", "name": "Responder autorización", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.4,
+      "position": [960, 0], "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": { "responseCode": 200 } }
+    },
+    {
+      "id": "auth-error", "name": "Responder error", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.4,
+      "position": [720, 240], "parameters": { "respondWith": "json", "responseBody": "={{ {message:'No se pudo consultar la autorización'} }}", "options": { "responseCode": 503 } }
+    }
+  ],
+  "connections": {
+    "Webhook autorización": { "main": [[{ "node": "Validar correo", "type": "main", "index": 0 }]] },
+    "Validar correo": { "main": [[{ "node": "Leer usuarios", "type": "main", "index": 0 }], [{ "node": "Responder error", "type": "main", "index": 0 }]] },
+    "Leer usuarios": { "main": [[{ "node": "Resolver permisos", "type": "main", "index": 0 }], [{ "node": "Responder error", "type": "main", "index": 0 }]] },
+    "Resolver permisos": { "main": [[{ "node": "Responder autorización", "type": "main", "index": 0 }], [{ "node": "Responder error", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": false }
+}

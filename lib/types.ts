@@ -2,6 +2,7 @@ export const MODULES = ["remitos", "chapas", "cheques"] as const;
 
 export type ModuleSlug = (typeof MODULES)[number];
 export type ModuleOperation = "create" | "update";
+export type WebProfile = "devAdmin" | "Labruna";
 
 export interface AppUser {
   id: string;
@@ -9,6 +10,8 @@ export interface AppUser {
   email: string;
   enabled: boolean;
   allowedModules: ModuleSlug[];
+  profile?: WebProfile;
+  authProvider?: "google" | "local";
 }
 
 export interface UserRecord extends AppUser {

@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Banknote,
+  Camera,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -403,8 +404,14 @@ function UploadStage({
   onRemove: () => void;
   onAnalyze: () => void;
 }) {
-  function openPicker() {
-    const input = inputRef.current;
+  const [isMobilePhone, setIsMobilePhone] = useState(false);
+  const cameraInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMobilePhone(/Mobi|iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent));
+  }, []);
+
+  function openPicker(input: HTMLInputElement | null) {
     if (!input) return;
     input.value = "";
     input.click();
@@ -426,6 +433,7 @@ function UploadStage({
           onDrop={onDrop}
         >
           <input ref={inputRef} type="file" accept={definition.accept} onChange={onInput} hidden />
+          {isMobilePhone && <input ref={cameraInput} type="file" accept="image/*" capture="environment" onChange={onInput} hidden />}
           <span className="upload-symbol"><UploadCloud size={31} /></span>
           <h3>Arrastrá el archivo o elegilo desde el equipo</h3>
           <p>{definition.formatsLabel} · Hasta 15 MB</p>
@@ -433,10 +441,15 @@ function UploadStage({
             <button
               type="button"
               className="secondary-button"
-              onClick={openPicker}
+              onClick={() => openPicker(inputRef.current)}
             >
               <FileText size={18} /> Elegir archivo
             </button>
+            {isMobilePhone && (
+              <button type="button" className="secondary-button" onClick={() => openPicker(cameraInput.current)}>
+                <Camera size={18} /> Tomar foto
+              </button>
+            )}
           </div>
         </div>
       ) : (

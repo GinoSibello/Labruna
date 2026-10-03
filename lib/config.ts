@@ -7,6 +7,18 @@ function positiveNumber(name: string, fallback: number): number {
 }
 
 export const config = {
+  get authProvider() {
+    return process.env.AUTH_PROVIDER === "local" ? "local" : "google";
+  },
+  get googleClientId() {
+    return process.env.GOOGLE_CLIENT_ID ?? "";
+  },
+  get googleClientSecret() {
+    return process.env.GOOGLE_CLIENT_SECRET ?? "";
+  },
+  get authWebhookUrl() {
+    return process.env.N8N_AUTH_AUTHORIZE_URL ?? "";
+  },
   get appOrigin() {
     return process.env.APP_ORIGIN?.replace(/\/$/, "") ?? "http://localhost:3000";
   },

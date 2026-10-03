@@ -9,6 +9,7 @@ import { createSessionToken, verifySessionToken } from "@/lib/session";
 let testDirectory: string;
 
 beforeAll(async () => {
+  process.env.AUTH_PROVIDER = "local";
   testDirectory = await mkdtemp(path.join(tmpdir(), "labruna-auth-"));
   const usersFile = path.join(testDirectory, "users.json");
   const passwordHash = await argon2.hash("clave-de-prueba-123", { type: argon2.argon2id });

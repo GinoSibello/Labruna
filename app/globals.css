@@ -43,6 +43,7 @@ button:disabled { cursor: not-allowed; opacity: 0.62; }
 .login-card-heading h2 { margin: 9px 0 8px; font-size: 2rem; letter-spacing: -.035em; }
 .login-card-heading > p:last-child, .privacy-note { color: var(--muted); line-height: 1.55; }
 .login-form { display: flex; flex-direction: column; margin-top: 30px; }
+.login-form a.primary-button { text-decoration: none; }
 .field-label { margin: 0 0 8px; font-size: .89rem; font-weight: 750; }
 .input-shell { display: flex; align-items: center; gap: 10px; min-height: 50px; margin-bottom: 20px; padding: 0 13px; border: 1px solid #cbd6e2; border-radius: 11px; background: white; color: #8090a4; transition: border .18s, box-shadow .18s; }
 .input-shell:focus-within { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(23,105,224,.11); }

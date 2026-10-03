@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { config } from "@/lib/config";
 import { findEnabledUser } from "@/lib/users";
+import { authorizeGoogleUser } from "@/lib/web-authorization";
 import type { AppUser, SessionUser } from "@/lib/types";
 
 export const SESSION_COOKIE = "labruna_session";
@@ -15,6 +16,7 @@ export async function createSessionToken(user: AppUser): Promise<string> {
     name: user.name,
     email: user.email,
     allowedModules: user.allowedModules,
+    authProvider: user.authProvider ?? "local",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -27,7 +29,12 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
   try {
     const { payload } = await jwtVerify(token, key(), { algorithms: ["HS256"] });
     if (!payload.sub || !payload.exp) return null;
-    const current = await findEnabledUser(payload.sub);
+    const provider = payload.authProvider ?? "local";
+    if (provider !== config.authProvider) return null;
+    const current = provider === "google"
+      ? (payload.sub.startsWith("google:") && typeof payload.email === "string"
+          ? await authorizeGoogleUser(payload.sub.slice(7), payload.email) : null)
+      : await findEnabledUser(payload.sub);
     if (!current) return null;
     return { ...current, exp: payload.exp };
   } catch {

@@ -17,6 +17,7 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (config.authProvider !== "local") throw new AppError("LOGIN_DISABLED", "Ingresá con tu cuenta de Google.", 403);
     assertSameOrigin(request);
     const body = bodySchema.parse(await request.json());
     const ip = requestIp(request);

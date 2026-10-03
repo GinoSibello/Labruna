@@ -16,6 +16,11 @@ Aplicación interna para procesar y revisar remitos, planos de chapas y cheques 
 
 ## Puesta en marcha local
 
+El login predeterminado usa Google y autorización por n8n contra la planilla
+actual. Configuración completa, workflow importable y las dos cuentas iniciales:
+[Login con Google](docs/google-login.md).
+Para usar el login legado de los pasos siguientes, establecer `AUTH_PROVIDER=local`.
+
 1. Instalar dependencias con `npm install`.
 2. Copiar `.env.example` a `.env` y completar sus valores.
 3. Crear `secrets/users.json` tomando `config/users.example.json` como base.
@@ -34,7 +39,7 @@ Aplicación interna para procesar y revisar remitos, planos de chapas y cheques 
 
 1. Configurar las seis URLs privadas de n8n y el secreto compartido.
 2. Empezar con `FEATURE_REMITOS=true` y los demás módulos desactivados.
-3. Crear el archivo real `secrets/users.json` fuera del repositorio.
+3. Configurar Google y el webhook de autorización siguiendo [la guía de login](docs/google-login.md). El archivo `users.json` solo es necesario para `AUTH_PROVIDER=local`.
 4. Configurar `APP_ORIGIN` con el dominio HTTPS exacto.
 5. Ejecutar `docker compose up -d --build`.
 6. Usar un proxy HTTPS. Hay una base en `deploy/nginx.conf.example`.

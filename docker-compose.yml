@@ -10,7 +10,6 @@ services:
       - "127.0.0.1:${APP_PORT:-3100}:3000"
     volumes:
       - pending-data:/app/data/uploads
-      - ./secrets/users.json:/run/secrets/users.json:ro
     read_only: true
     tmpfs:
       - /tmp:size=64m,noexec,nosuid

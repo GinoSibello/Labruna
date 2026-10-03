@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
 import { LoginForm } from "./login-form";
+import { config } from "@/lib/config";
+import { appPath } from "@/lib/app-path";
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (await currentUser()) redirect("/workspace");
+  const { error } = await searchParams;
+  const messages: Record<string, string> = {
+    not_authorized: "Tu cuenta no tiene acceso. Contactá al administrador.",
+    google_cancelled: "Cancelaste el ingreso con Google. Podés volver a intentarlo.",
+    google_unavailable: "No pudimos completar el ingreso con Google. Verificá la configuración o volvé a intentarlo en unos minutos.",
+  };
 
   return (
     <main className="login-shell">
@@ -30,10 +38,16 @@ export default async function LoginPage() {
           <div className="login-card-heading">
             <p className="eyebrow">ACCESO INTERNO</p>
             <h2>Ingresar</h2>
-            <p>Usá la cuenta asignada por el administrador.</p>
+            <p>{config.authProvider === "google" ? "Usá la cuenta de Google habilitada para tu equipo." : "Usá la cuenta asignada por el administrador."}</p>
           </div>
-          <LoginForm />
-          <p className="privacy-note">La sesión se cerrará automáticamente después de 8 horas.</p>
+          {config.authProvider === "google" ? (
+            <div className="login-form">
+              {error && messages[error] && <p className="form-error" role="alert">{messages[error]}</p>}
+              <a className="primary-button full-width" href={appPath("/api/auth/google")}>Continuar con Google</a>
+              <p className="privacy-note">Google verifica tu identidad. El administrador habilita tu acceso y tus permisos.</p>
+            </div>
+          ) : <LoginForm />}
+          <p className="privacy-note">La sesión se cerrará automáticamente después de {config.sessionTtlSeconds / 3600} horas.</p>
         </div>
       </section>
     </main>
