@@ -256,6 +256,8 @@ def main():
         else:
             workflow_id = manifest["workflows"][module]["id"]
             current_pilot = api(api_key,"GET","/workflows/"+workflow_id)
+            if any(n["name"] == "Guardar documento revisado en Sheets" for n in current_pilot["nodes"]):
+                raise SystemExit("Este workflow ya guarda documentos. No reemplazarlo por el piloto; usar enable-n8n-web-writes.py.")
             if current_pilot["active"]:
                 api(api_key,"POST","/workflows/"+workflow_id+"/deactivate")
             api(api_key,"PUT","/workflows/"+workflow_id,workflow)

@@ -1,36 +1,42 @@
 # MEMORY.md — Memoria del proyecto
 
-Última actualización: 2026-10-07. Mantener aproximadamente 50 líneas como máximo, sin datos sensibles.
+Última actualización: 2026-10-06. Sin secretos ni datos personales.
 
 ## Estado actual
 
-- Aplicación interna Next.js para analizar y revisar remitos/facturas, chapas y cheques mediante n8n; Sheets y Drive son el almacenamiento de negocio.
-- Se revisaron manifiestos, configuración, documentación y los puntos de entrada del procesamiento para completar `AGENTS.md` con instrucciones verificadas.
-- `AGENTS.md` quedó en español por pedido del usuario; incluye comandos, configuración local, despliegue y límites de procesamiento.
-- El usuario agregó la sección de memoria en `AGENTS.md`: leer este archivo al iniciar y actualizarlo al terminar cada tarea.
-- Remitos conserva la fecha detectada por el modelo (`fecha` o `rows[].Fecha`); si falta, es null o está vacía, usa el día de carga en Buenos Aires.
-- Fecha es editable en revisión y se conserva al confirmar. Mes y AÑO siguen automáticos, derivados de esa fecha (ISO o DD/MM/AA[AA]), y se actualizan al editarla.
-- Verificación: typecheck y 34 pruebas Vitest correctas. El build agotó el timeout inicial; `npm run build` separado pasó. Servicios externos y despliegue no verificados.
-- Publicación solicitada en GitHub sobre `main`: `git fetch origin` confirmó que la base local y remota estaban sincronizadas antes del commit.
+- main se actualizó por fast-forward a c729ae6; antes del pull no había cambios locales ni divergencia.
+- Despliegue real: Docker manual, contenedor labruna-documentos, puerto local 3100; configuración privada C:/ProgramData/Labruna/.env. No sustituirlo por Compose sin revisar sus diferencias.
+- Google login está desplegado desde e415c09. Callback y variables verificados; prueba de acceso real por el usuario pendiente.
+- El error de autorización observado era web_enable en Sheets: el workflow requiere web_enabled. No confundirlo con credenciales OAuth.
+- El usuario autorizó habilitar escrituras y corregir Sheets en los tres workflows web.
+- Labruna Web PILOTO conserva IDs/URLs; los tres workflows están activos y confirman con HTTP 200 y writesEnabled:true.
+- Guardado usa datos revisados y todas las columnas: remitos append por artículo; chapas/cheques append o update por clave, como los originales.
+- La segunda Fecha de chapas se escribe desde column_P por posición. Se corrigieron mappings con caracteres dañados y referencias antiguas a IA.
+- La rama activa usa HTTP Request con la credencial existente de Sheets y batchUpdate; nodos inferiores de Sheets corregidos como referencia, deshabilitados/desconectados.
+- Escritura y recibo de requestId atómicos en metadatos de Sheets, sin columnas nuevas. IDs explícitos de metadatos protegen reintentos simultáneos.
+- WhatsApp, autorización, dropdowns, Drive y configuración privada no cambiaron. Link Imagen conserva el valor revisado; no hay nueva subida a Drive.
+- Respaldo: C:/ProgramData/Labruna/backups/sheet-writes-20261006-124049.
 
-## Decisiones (y por qué)
+## Verificación realizada
 
-- Conservar el bloque de advertencias de Next.js y sus marcadores: `next dev` lo genera y puede volver a agregarlo.
-- Priorizar configuración y código sobre ejemplos del README: se detectaron diferencias en el puerto de Docker y los esquemas de revisión.
-- Mantener las reglas permanentes en `AGENTS.md` y usar esta memoria para el estado, decisiones y pendientes; evita duplicar instrucciones que podrían desactualizarse.
-- No sobrescribir fechas no vacías del modelo: conservarlas para revisión, incluso si no se reconoce el formato. El respaldo de hoy es solo para fechas ausentes.
+- Nueve pruebas locales del planner pasaron.
+- Pruebas reales n8n/Sheets en pestañas temporales pasaron: creación, todas las columnas, importes, ceros iniciales, ambas fechas, update y reintentos secuenciales/simultáneos sin duplicados.
+- Se eliminaron pestañas, recibos y workflows temporales. No se agregaron registros de prueba a las pestañas de negocio; sus cantidades de filas permanecieron iguales.
+- Tres webhooks productivos rechazan entradas inválidas con HTTP 422 antes de escribir. Originales de WhatsApp comparados y sin cambios.
+- Se reinició labruna-documentos por pedido del usuario el 2026-10-06: healthy, /login HTTP 200 y botón Google presente. Los cambios de n8n ya estaban activos antes del reinicio.
+- Scripts/documentación quedan locales, sin commit ni push. Falta prueba de un documento real desde la web por el usuario.
 
-## Aprendizajes y errores a evitar
+## Errores a evitar
 
-- No copiar `.env.example` para desarrollo sin adaptar el origen y la ruta de uploads: contiene valores de despliegue. `.env.development.local` también puede sobrescribir la configuración.
-- No interpretar `N8N_MOCK_MODE=true` como simulación del login de Google; para la demo sin cuentas se necesita además `DEV_AUTH_BYPASS=true` en desarrollo.
-- No usar los ejemplos antiguos de `docs/n8n-contracts.md` como esquema de revisión: contrastar con `lib/remitos-sheet.ts`, `lib/sheet-forms.ts` y las rutas de procesamiento.
-- No confundir los scripts Python operativos con verificaciones portables: dependen de datos privados de n8n de esta máquina.
-- No registrar pruebas o integraciones como exitosas sin ejecutarlas; distinguir revisión de código de verificación en ejecución.
-- En este entorno npm/node no están en PATH. Se verificó con el runtime Node local de Codex y npm de AppData/Roaming, agregados solo al PATH del proceso.
+- No desplegar prepare-n8n-web-pilot.py encima de workflows con guardado; incluye protección. Usar enable-n8n-web-writes.py.
+- No activar nodos inferiores de referencia: duplicarían la escritura de la rama activa.
+- N8N_MOCK_MODE no simula autorización Google; ejemplos antiguos de n8n-contracts no representan el formulario actual.
+- Leer AGENTS.md y documentación instalada de Next antes de cambios de código; contrastar esquemas con lib/remitos-sheet.ts y lib/sheet-forms.ts.
+- No subir .env, SQLite, exportaciones privadas, respaldos ni valores de usuarios al repositorio.
+- Comandos operativos: docs/n8n-web-writes.md. Herramientas requieren datos privados de esta máquina.
 
-## Próximos pasos
-
-- Al iniciar la próxima sesión, leer `AGENTS.md` y esta memoria, y revisar el estado de Git para identificar cambios del usuario.
-- No quedó una tarea funcional pendiente acordada; continuar con el próximo pedido del usuario.
-- Ante cambios de código, ejecutar la verificación pertinente indicada en `AGENTS.md` y actualizar aquí el resultado real.
+## Actualización 2026-10-07
+- Se incorpora origin/main 3b1ac58: remitos conserva Fecha detectada y permite editarla; Mes y AÑO se derivan de ella.
+- Se publica la rama codex/n8n-sheet-writes con herramientas y documentación del guardado ya habilitado.
+- npm run check con el Node del PATH falla en workers de autenticación (3221225477); se verifica con runtime de Codex y Docker Node 22.
+- Verificación actual: npm run check pasó con runtime de Codex (34 pruebas y build); nueve pruebas del planner y sintaxis Python correctas.
