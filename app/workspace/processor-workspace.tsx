@@ -25,7 +25,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { moduleDefinitions, type FieldDefinition } from "@/lib/modules";
 import { appPath } from "@/lib/app-path";
-import { REMITOS_SHEET_HEADERS, REMITOS_AUTOMATIC_HEADERS } from "@/lib/remitos-sheet";
+import { REMITOS_SHEET_HEADERS, REMITOS_AUTOMATIC_HEADERS, remitosDateCalendar } from "@/lib/remitos-sheet";
 import type { AnalyzeResponse, ConfirmResponse, ModuleSlug } from "@/lib/types";
 
 type Stage = "upload" | "analyzing" | "review" | "saving" | "success";
@@ -616,7 +616,13 @@ function EditableField({ field, value, errors, onChange, sheetOptions, onAddOpti
             const copy = rows.map((current) => ({ ...current })); copy[index][header] = event.target.value; onChange(copy);
           }}><option value="REMITO">REMITO</option><option value="FACTURA">FACTURA</option></select> : <input
             value={String(row[header] ?? "")} readOnly={REMITOS_AUTOMATIC_HEADERS.has(header)}
-            onChange={(event) => { const copy = rows.map((current) => ({ ...current })); copy[index][header] = event.target.value; onChange(copy); }} />}
+            placeholder={header === "Fecha" ? "DD/MM/AAAA" : undefined}
+            onChange={(event) => {
+              const copy = rows.map((current) => ({ ...current }));
+              copy[index][header] = event.target.value;
+              if (header === "Fecha") Object.assign(copy[index], remitosDateCalendar(event.target.value));
+              onChange(copy);
+            }} />}
         </label>)}</div>
       </div>)}</div>
       {errors?.map((message) => <small className="field-error" key={message}>{message}</small>)}

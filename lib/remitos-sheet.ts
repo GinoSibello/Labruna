@@ -6,7 +6,7 @@ export const REMITOS_SHEET_HEADERS = [
 ] as const;
 
 export type RemitosSheetRow = Record<(typeof REMITOS_SHEET_HEADERS)[number], string>;
-export const REMITOS_AUTOMATIC_HEADERS = new Set<string>(["Fecha", "Mes", "AÑO"]);
+export const REMITOS_AUTOMATIC_HEADERS = new Set<string>(["Mes", "AÑO"]);
 
 export function uploadCalendar(timestamp: string) {
   const date = new Date(timestamp);
@@ -23,14 +23,34 @@ export function uploadCalendar(timestamp: string) {
 
 const text = (value: unknown) => value == null ? "" : String(value).trim();
 
+export function remitosDateCalendar(value: string) {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  const local = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(value.trim());
+  if (!iso && !local) return undefined;
+  const day = Number(iso ? iso[3] : local![1]);
+  const month = Number(iso ? iso[2] : local![2]);
+  const rawYear = iso ? iso[1] : local![3];
+  const year = Number(rawYear) + (rawYear.length === 2 ? 2000 : 0);
+  const date = new Date(`${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T12:00:00Z`);
+  if (!Number.isFinite(date.getTime()) || date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) return undefined;
+  const calendar = uploadCalendar(date.toISOString());
+  return { Mes: calendar.Mes, "AÑO": calendar["AÑO"] };
+}
+
+function reviewCalendar(value: unknown, uploadedAt: string) {
+  const fallback = uploadCalendar(uploadedAt);
+  const fecha = text(value) || fallback.Fecha;
+  return { ...fallback, ...remitosDateCalendar(fecha), Fecha: fecha };
+}
+
 export function prepareRemitosSheetData(data: Record<string, unknown>, uploadedAt: string) {
-  const calendar = uploadCalendar(uploadedAt);
   if (Array.isArray(data.rows)) {
     return { rows: data.rows.map((entry) => {
       const row = entry as Record<string, unknown>;
-      return { ...Object.fromEntries(REMITOS_SHEET_HEADERS.map((header) => [header, text(row[header])])), ...calendar };
+      return { ...Object.fromEntries(REMITOS_SHEET_HEADERS.map((header) => [header, text(row[header])])), ...reviewCalendar(row.Fecha, uploadedAt) };
     }) };
   }
+  const calendar = reviewCalendar(data.fecha, uploadedAt);
   const items = Array.isArray(data.items) && data.items.length ? data.items : [{}];
   return { rows: items.map((item: Record<string, unknown>) => ({
     Fecha: calendar.Fecha,
