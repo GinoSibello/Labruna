@@ -40,3 +40,5 @@
 - Se publica la rama codex/n8n-sheet-writes con herramientas y documentación del guardado ya habilitado.
 - npm run check con el Node del PATH falla en workers de autenticación (3221225477); se verifica con runtime de Codex y Docker Node 22.
 - Verificación actual: npm run check pasó con runtime de Codex (34 pruebas y build); nueve pruebas del planner y sintaxis Python correctas.
+- PR #1 creado: https://github.com/GinoSibello/Labruna/pull/1 (abierto, sin merge).
+- Docker reconstruido y desplegado el 2026-10-07: labruna-documentos:pr-sheet-writes-20261007, healthy; /login HTTP 200 con Google. Configuración, montajes y puerto conservados; contenedor anterior detenido como labruna-documentos-backup-20261007.
